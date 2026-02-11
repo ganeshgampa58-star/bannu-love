@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bannu 💖 Gannu</title>
+
+  <style>
+    :root{
+      --bg1:#ffd6e7;
+      --bg2:#fff3f8;
+      --card:#ffffffd8;
+      --text:#1f1f1f;
+      --muted:#555;
+      --yes:#22c55e;
+      --no:#ef4444;
+      --shadow: 0 18px 60px rgba(0,0,0,.18);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(1200px 700px at 20% 10%, #fff, transparent 60%),
+        radial-gradient(900px 600px at 80% 20%, #ff9ab133, transparent 55%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow:hidden;
+      color:var(--text);
+    }
+    .card{
+      width:min(560px, 92vw);
+      background: var(--card);
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:28px;
+      padding:22px 20px 18px;
+      box-shadow: var(--shadow);
+      position:relative;
+      text-align:center;
+      backdrop-filter: blur(10px);
+    }
+    .top{
+      display:flex; align-items:center; justify-content:center; gap:12px;
+      margin-top:4px;
+    }
+    .blob{
+      width:108px; height:108px; border-radius:28px;
+      background:#fff;
+      border:1px solid rgba(0,0,0,.06);
+      display:grid; place-items:center;
+      font-size:60px;
+      user-select:none;
+    }
+    h1{ margin:10px 0 6px; font-size:26px; letter-spacing:.2px;}
+    p{ margin:0; color:var(--muted); line-height:1.5; white-space:pre-line; }
+
+    .btnRow{
+      display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+      margin-top:16px; position:relative;
+      min-height:62px;
+    }
+    button{
+      border:0; border-radius:16px;
+      padding:12px 18px; font-weight:900;
+      cursor:pointer; box-shadow: 0 12px 26px rgba(0,0,0,.14);
+      transition: transform .12s ease;
+      user-select:none;
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    #yesBtn{ background: var(--yes); color:#fff; font-size:18px;}
+    #noBtn{ background: var(--no); color:#fff; font-size:18px;}
+
+    .tiny{ margin-top:12px; font-size:12px; opacity:.75; }
+
+    .scene{ display:none; }
+    .scene.active{ display:block; }
+
+    .startOverlay{
+      position:fixed; inset:0;
+      display:grid; place-items:center;
+      background: radial-gradient(900px 600px at 50% 15%, #ffffffd0, transparent 60%),
+                  linear-gradient(160deg, #ffd6e7, #fff3f8);
+      z-index:50;
+      padding:18px;
+    }
+    .startBox{
+      width:min(560px, 92vw);
+      background:#ffffffda;
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:28px;
+      padding:22px 20px;
+      box-shadow: var(--shadow);
+      text-align:center;
+    }
+    .startBox h2{ margin:6px 0 8px; font-size:28px;}
+    .startBox .sub{ color:#444; opacity:.85; margin:0 0 14px;}
+
+    .final{
+      position:fixed; inset:0;
+      display:none;
+      place-items:center;
+      background:
+        radial-gradient(900px 600px at 50% 15%, #ffffffd0, transparent 60%),
+        linear-gradient(160deg, #ffd6e7, #fff3f8);
+      z-index:60;
+      padding:18px;
+      text-align:center;
+    }
+    .final .box{
+      width:min(640px, 94vw);
+      background:#ffffffde;
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:30px;
+      padding:26px 22px 18px;
+      box-shadow: var(--shadow);
+    }
+    .final h3{ margin:0 0 8px; font-size:34px; }
+    .final p{ margin:0; font-size:18px; color:#222; }
+    .final .tag{
+      margin-top:12px;
+      display:inline-block;
+      padding:8px 14px;
+      border-radius:999px;
+      background: rgba(0,0,0,.06);
+      border:1px solid rgba(0,0,0,.08);
+      font-weight:900;
+    }
+    .final .actions{
+      margin-top:14px;
+      display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    }
+    .ghost{
+      background:#ffffff;
+      border:1px solid rgba(0,0,0,.12);
+      color:#111;
+      box-shadow:none;
+    }
+
+    .heart{
+      position:fixed;
+      z-index:55;
+      font-size:18px;
+      animation: floatUp 4s linear forwards;
+      opacity:.85;
+      user-select:none;
+      pointer-events:none;
+    }
+    @keyframes floatUp{
+      from{ transform: translateY(20px) scale(1); opacity:.9; }
+      to{ transform: translateY(-120vh) scale(1.25); opacity:0; }
+    }
+
+    canvas{ position:fixed; inset:0; pointer-events:none; z-index:70; }
+  </style>
+</head>
+
+<body>
+
+<canvas id="fx"></canvas>
+
+<!-- START -->
+<div class="startOverlay" id="startOverlay">
+  <div class="startBox">
+    <div style="font-size:70px;">💌</div>
+    <h2>For Bannu</h2>
+    <p class="sub">A tiny surprise made by <b>Gannu</b> 🫶</p>
+    <button id="startBtn">Tap to Start ✨</button>
+  </div>
+</div>
+
+<!-- MAIN CARD -->
+<div class="card" id="card">
+  <!-- Scene 1 -->
+  <div class="scene active" id="scene1">
+    <div class="top">
+      <div class="blob" id="mood">🐻</div>
+    </div>
+
+    <h1 id="title">Bannu… will you be my Valentine? 💘</h1>
+    <p id="sub">Be honest 😌</p>
+
+    <div class="btnRow" id="btnRow">
+      <button id="yesBtn">Yes 💖</button>
+      <button id="noBtn">No 🙄</button>
+    </div>
+
+    <div class="tiny" id="hint">Try clicking “No” 😈</div>
+  </div>
+
+  <!-- Scene 2 -->
+  <div class="scene" id="scene2">
+    <div class="top">
+      <div class="blob">🥺</div>
+    </div>
+
+    <h1>Okay… one last thing 😭</h1>
+    <p id="typed" style="min-height:88px;margin-top:10px;"></p>
+
+    <div class="btnRow">
+      <button id="finalBtn">Continue 💌</button>
+    </div>
+
+    <div class="tiny">From Gannu → to Bannu</div>
+  </div>
+</div>
+
+<!-- FINAL -->
+<div class="final" id="final">
+  <div class="box">
+    <div style="font-size:76px;margin-bottom:8px;">🎉</div>
+    <h3>Yayyyy Bannu!!! 💖</h3>
+    <p>
+      You just made Gannu the happiest person 😭❤️
+      <br/>I love youuuuu!
+    </p>
+
+    <div class="tag">Bannu 🤍 Gannu</div>
+
+    <div class="actions">
+      <button class="ghost" id="copyBtn">Copy cute message</button>
+      <button class="ghost" id="heartsBtn">More hearts 💞</button>
+    </div>
+
+    <div class="tiny">Screenshot this 😌</div>
+  </div>
+</div>
+
+<script>
+  // PERSONALIZE
+  const HER = "Bannu";
+  const ME  = "Gannu";
+
+  // ✅ After how many tries should NO disappear?
+  const NO_DISAPPEAR_AFTER = 7;
+
+  // Elements
+  const startOverlay = document.getElementById("startOverlay");
+  const startBtn = document.getElementById("startBtn");
+
+  const scene1 = document.getElementById("scene1");
+  const scene2 = document.getElementById("scene2");
+  const title  = document.getElementById("title");
+  const sub    = document.getElementById("sub");
+  const hint   = document.getElementById("hint");
+  const mood   = document.getElementById("mood");
+
+  const card   = document.getElementById("card");
+  const btnRow = document.getElementById("btnRow");
+
+  const yesBtn = document.getElementById("yesBtn");
+  const noBtn  = document.getElementById("noBtn");
+
+  const typed  = document.getElementById("typed");
+  const finalBtn = document.getElementById("finalBtn");
+
+  const finalLayer = document.getElementById("final");
+  const copyBtn = document.getElementById("copyBtn");
+  const heartsBtn = document.getElementById("heartsBtn");
+
+  // Initial copy (always consistent on load)
+  title.textContent = `${HER}… will you be my Valentine? 💘`;
+  sub.textContent   = "Be honest 😌";
+  hint.textContent  = "Try clicking “No” 😈";
+  mood.textContent  = "🐻";
+
+  // Start
+  startBtn.addEventListener("click", () => {
+    startOverlay.style.display = "none";
+    popHeartBurst(10);
+
+    // Reset NO position each time (consistent start)
+    resetNoButton();
+  });
+
+  // Lines
+  const lines = [
+    `${HER}… sure? 😶`,
+    "Are you REALLY pressing No? 🥺",
+    `${HER} pleaseee 😭`,
+    `Okay listen… ${ME} will be sad 😔`,
+    "Last chance 😤",
+    "No button is not for you 😈",
+    `${HER}, you love me na? 😚`,
+    "Okay okay… JUST CLICK YES 😌"
+  ];
+
+  let dodgeCount = 0;
+  let yesScale = 1;
+
+  function resetNoButton(){
+    // Put it back next to YES
+    noBtn.style.display = "inline-block";
+    noBtn.style.position = "relative";
+    noBtn.style.left = "0px";
+    noBtn.style.top = "0px";
+    noBtn.style.zIndex = "1";
+    noBtn.style.transform = "none";
+  }
+
+  function moveNoInsideCard(){
+    // If already gone, do nothing
+    if (noBtn.style.display === "none") return;
+
+    dodgeCount++;
+
+    // After N tries → disappear NO (by design)
+    if (dodgeCount >= NO_DISAPPEAR_AFTER){
+      noBtn.style.display = "none";
+      title.textContent = `Okay ${HER}… NO is removed 😌`;
+      sub.textContent = `Now only YES remains 💖`;
+      hint.textContent = `Go on… click YES 😭`;
+      mood.textContent = "🥰";
+      popHeartBurst(8);
+      return;
+    }
+
+    title.textContent = lines[Math.min(dodgeCount - 1, lines.length - 1)];
+    sub.textContent = `Don’t do this to ${ME} 😭`;
+    hint.textContent = "Try again 😈";
+
+    mood.textContent = dodgeCount < 3 ? "🥺" : (dodgeCount < 4 ? "😤" : "😈");
+
+    // YES grows
+    yesScale = Math.min(yesScale + 0.18, 2.7);
+    yesBtn.style.transform = `scale(${yesScale})`;
+    yesBtn.style.fontSize = `${18 + (yesScale - 1) * 8}px`;
+    yesBtn.textContent = dodgeCount >= 4 ? "YESSS 💖" : "Yes 💖";
+
+    // Move NO inside the card so it never "bugs out"
+    card.style.position = "relative";
+    noBtn.style.position = "absolute";
+    noBtn.style.zIndex = "5";
+
+    const cardRect = card.getBoundingClientRect();
+    const btnRect  = noBtn.getBoundingClientRect();
+
+    const pad = 18;
+    const maxX = Math.max(pad, cardRect.width  - btnRect.width  - pad);
+    const maxY = Math.max(pad, cardRect.height - btnRect.height - pad);
+
+    // Keep it lower to avoid covering title text
+    const minY = 170;
+    const safeMaxY = Math.max(minY, maxY);
+
+    const x = Math.random() * (maxX - pad) + pad;
+    const y = Math.random() * (safeMaxY - minY) + minY;
+
+    noBtn.style.left = `${x}px`;
+    noBtn.style.top  = `${y}px`;
+
+    popHeartBurst(3);
+  }
+
+  // Dodge on hover + click (like reels)
+  noBtn.addEventListener("mouseenter", moveNoInsideCard);
+  noBtn.addEventListener("click", (e)=>{ e.preventDefault(); moveNoInsideCard(); });
+
+  // YES -> scene2
+  yesBtn.addEventListener("click", () => {
+    // Clean up NO position
+    resetNoButton();
+
+    scene1.classList.remove("active");
+    scene2.classList.add("active");
+    typeLoveNote();
+    popHeartBurst(12);
+  });
+
+  function typeLoveNote(){
+    typed.textContent = "";
+    const text =
+      `${HER}, I’m not perfect… but I promise one thing.\n` +
+      `I’ll choose you—again and again.\n\n` +
+      `You’re my peace, my laugh, my favorite person.\n` +
+      `— ${ME} ❤️`;
+
+    let i = 0;
+    const speed = 32;
+    function tick(){
+      if(i < text.length){
+        typed.textContent += text[i];
+        i++;
+        setTimeout(tick, speed);
+      }
+    }
+    tick();
+  }
+
+  // Final screen
+  finalBtn.addEventListener("click", () => {
+    finalLayer.style.display = "grid";
+    fireConfetti(260);
+    heartsRain(18);
+  });
+
+  // Copy message
+  copyBtn.addEventListener("click", async () => {
+    const msg = `Bannu ❤️
+
+You just made Gannu the happiest 😭💖
+I love youuuuu!
+
+— Gannu`;
+    try{
+      await navigator.clipboard.writeText(msg);
+      popHeartBurst(8);
+    }catch(e){}
+  });
+
+  heartsBtn.addEventListener("click", () => {
+    heartsRain(24);
+    popHeartBurst(10);
+  });
+
+  // Hearts helpers
+  function heartOne(){
+    const h = document.createElement("div");
+    h.className = "heart";
+    h.textContent = Math.random() < 0.35 ? "💖" : (Math.random() < 0.5 ? "💕" : "❤️");
+    h.style.left = (Math.random()*100) + "vw";
+    h.style.bottom = "-20px";
+    h.style.fontSize = (14 + Math.random()*18) + "px";
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(), 4200);
+  }
+  function heartsRain(n=16){ for(let i=0;i<n;i++) setTimeout(heartOne, i*120); }
+  function popHeartBurst(n=10){ for(let i=0;i<n;i++) setTimeout(heartOne, i*60); }
+
+  // Confetti
+  const canvas = document.getElementById("fx");
+  const ctx = canvas.getContext("2d");
+  let pieces = [];
+  let anim = null;
+
+  function resize(){
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.floor(innerWidth * dpr);
+    canvas.height= Math.floor(innerHeight * dpr);
+    canvas.style.width = innerWidth + "px";
+    canvas.style.height= innerHeight + "px";
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  addEventListener("resize", resize); resize();
+
+  function fireConfetti(n=220){
+    const colors = ["#ff4d6d","#22c55e","#60a5fa","#f59e0b","#a78bfa","#fb7185"];
+    for(let i=0;i<n;i++){
+      pieces.push({
+        x: Math.random()*innerWidth,
+        y: -30,
+        vx:(Math.random()-0.5)*7,
+        vy:(Math.random()*4)+3,
+        r:(Math.random()*6)+3,
+        c:colors[(Math.random()*colors.length)|0],
+        rot:Math.random()*Math.PI,
+        vr:(Math.random()-0.5)*0.25
+      });
+    }
+    if(!anim) tick();
+  }
+
+  function tick(){
+    anim = requestAnimationFrame(tick);
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    for(const p of pieces){
+      p.x += p.vx; p.y += p.vy;
+      p.vy += 0.03;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*0.7);
+      ctx.restore();
+    }
+    pieces = pieces.filter(p => p.y < innerHeight + 60);
+    if(pieces.length === 0){
+      cancelAnimationFrame(anim);
+      anim = null;
+    }
+  }
+</script>
+
+</body>
+</html>
