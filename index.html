@@ -64,6 +64,8 @@
       cursor:pointer; box-shadow: 0 12px 26px rgba(0,0,0,.14);
       transition: transform .12s ease;
       user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     button:active{ transform: translateY(1px) scale(.99); }
     #yesBtn{ background: var(--yes); color:#fff; font-size:18px;}
@@ -244,7 +246,6 @@
   const mood   = document.getElementById("mood");
 
   const card   = document.getElementById("card");
-  const btnRow = document.getElementById("btnRow");
 
   const yesBtn = document.getElementById("yesBtn");
   const noBtn  = document.getElementById("noBtn");
@@ -256,7 +257,7 @@
   const copyBtn = document.getElementById("copyBtn");
   const heartsBtn = document.getElementById("heartsBtn");
 
-  // Initial copy (always consistent on load)
+  // Initial copy
   title.textContent = `${HER}… will you be my Valentine? 💘`;
   sub.textContent   = "Be honest 😌";
   hint.textContent  = "Try clicking “No” 😈";
@@ -266,9 +267,14 @@
   startBtn.addEventListener("click", () => {
     startOverlay.style.display = "none";
     popHeartBurst(10);
-
-    // Reset NO position each time (consistent start)
     resetNoButton();
+
+    // ✅ reset counters every time page is opened (fresh experience)
+    dodgeCount = 0;
+    yesScale = 1;
+    yesBtn.style.transform = "scale(1)";
+    yesBtn.style.fontSize = "18px";
+    yesBtn.textContent = "Yes 💖";
   });
 
   // Lines
@@ -287,7 +293,6 @@
   let yesScale = 1;
 
   function resetNoButton(){
-    // Put it back next to YES
     noBtn.style.display = "inline-block";
     noBtn.style.position = "relative";
     noBtn.style.left = "0px";
@@ -297,12 +302,11 @@
   }
 
   function moveNoInsideCard(){
-    // If already gone, do nothing
     if (noBtn.style.display === "none") return;
 
     dodgeCount++;
 
-    // After N tries → disappear NO (by design)
+    // After N tries → disappear NO
     if (dodgeCount >= NO_DISAPPEAR_AFTER){
       noBtn.style.display = "none";
       title.textContent = `Okay ${HER}… NO is removed 😌`;
@@ -325,7 +329,7 @@
     yesBtn.style.fontSize = `${18 + (yesScale - 1) * 8}px`;
     yesBtn.textContent = dodgeCount >= 4 ? "YESSS 💖" : "Yes 💖";
 
-    // Move NO inside the card so it never "bugs out"
+    // Move NO inside the card
     card.style.position = "relative";
     noBtn.style.position = "absolute";
     noBtn.style.zIndex = "5";
@@ -337,7 +341,6 @@
     const maxX = Math.max(pad, cardRect.width  - btnRect.width  - pad);
     const maxY = Math.max(pad, cardRect.height - btnRect.height - pad);
 
-    // Keep it lower to avoid covering title text
     const minY = 170;
     const safeMaxY = Math.max(minY, maxY);
 
@@ -350,15 +353,32 @@
     popHeartBurst(3);
   }
 
-  // Dodge on hover + click (like reels)
+  // ✅ MOBILE + DESKTOP handling (prevents double counting)
+  let touchTriggered = false;
+
+  function tryNo(e){
+    e.preventDefault();
+    moveNoInsideCard();
+  }
+
+  // Mobile: touchstart fires first
+  noBtn.addEventListener("touchstart", (e) => {
+    touchTriggered = true;
+    tryNo(e);
+  }, { passive: false });
+
+  // Desktop click + Mobile click fallback
+  noBtn.addEventListener("click", (e) => {
+    if (touchTriggered) { touchTriggered = false; return; } // prevent double
+    tryNo(e);
+  });
+
+  // Desktop hover (optional): keeps your laptop “funny” behavior
   noBtn.addEventListener("mouseenter", moveNoInsideCard);
-  noBtn.addEventListener("click", (e)=>{ e.preventDefault(); moveNoInsideCard(); });
 
   // YES -> scene2
   yesBtn.addEventListener("click", () => {
-    // Clean up NO position
     resetNoButton();
-
     scene1.classList.remove("active");
     scene2.classList.add("active");
     typeLoveNote();
@@ -385,14 +405,12 @@
     tick();
   }
 
-  // Final screen
   finalBtn.addEventListener("click", () => {
     finalLayer.style.display = "grid";
     fireConfetti(260);
     heartsRain(18);
   });
 
-  // Copy message
   copyBtn.addEventListener("click", async () => {
     const msg = `Bannu ❤️
 
@@ -411,7 +429,6 @@ I love youuuuu!
     popHeartBurst(10);
   });
 
-  // Hearts helpers
   function heartOne(){
     const h = document.createElement("div");
     h.className = "heart";
@@ -425,7 +442,6 @@ I love youuuuu!
   function heartsRain(n=16){ for(let i=0;i<n;i++) setTimeout(heartOne, i*120); }
   function popHeartBurst(n=10){ for(let i=0;i<n;i++) setTimeout(heartOne, i*60); }
 
-  // Confetti
   const canvas = document.getElementById("fx");
   const ctx = canvas.getContext("2d");
   let pieces = [];
