@@ -227,14 +227,11 @@
 </div>
 
 <script>
-  // PERSONALIZE
   const HER = "Bannu";
   const ME  = "Gannu";
 
-  // ✅ After how many tries should NO disappear?
   const NO_DISAPPEAR_AFTER = 7;
 
-  // Elements
   const startOverlay = document.getElementById("startOverlay");
   const startBtn = document.getElementById("startBtn");
 
@@ -246,7 +243,6 @@
   const mood   = document.getElementById("mood");
 
   const card   = document.getElementById("card");
-
   const yesBtn = document.getElementById("yesBtn");
   const noBtn  = document.getElementById("noBtn");
 
@@ -257,37 +253,10 @@
   const copyBtn = document.getElementById("copyBtn");
   const heartsBtn = document.getElementById("heartsBtn");
 
-  // Initial copy
   title.textContent = `${HER}… will you be my Valentine? 💘`;
   sub.textContent   = "Be honest 😌";
   hint.textContent  = "Try clicking “No” 😈";
   mood.textContent  = "🐻";
-
-  // Start
-  startBtn.addEventListener("click", () => {
-    startOverlay.style.display = "none";
-    popHeartBurst(10);
-    resetNoButton();
-
-    // ✅ reset counters every time page is opened (fresh experience)
-    dodgeCount = 0;
-    yesScale = 1;
-    yesBtn.style.transform = "scale(1)";
-    yesBtn.style.fontSize = "18px";
-    yesBtn.textContent = "Yes 💖";
-  });
-
-  // Lines
-  const lines = [
-    `${HER}… sure? 😶`,
-    "Are you REALLY pressing No? 🥺",
-    `${HER} pleaseee 😭`,
-    `Okay listen… ${ME} will be sad 😔`,
-    "Last chance 😤",
-    "No button is not for you 😈",
-    `${HER}, you love me na? 😚`,
-    "Okay okay… JUST CLICK YES 😌"
-  ];
 
   let dodgeCount = 0;
   let yesScale = 1;
@@ -301,12 +270,44 @@
     noBtn.style.transform = "none";
   }
 
+  function resetYesButton(){
+    yesScale = 1;
+    yesBtn.style.transform = "scale(1)";
+    yesBtn.style.fontSize = "18px";
+    yesBtn.textContent = "Yes 💖";
+  }
+
+  startBtn.addEventListener("click", () => {
+    startOverlay.style.display = "none";
+    popHeartBurst(10);
+
+    // Fresh start every open
+    dodgeCount = 0;
+    resetNoButton();
+    resetYesButton();
+
+    title.textContent = `${HER}… will you be my Valentine? 💘`;
+    sub.textContent   = "Be honest 😌";
+    hint.textContent  = "Try clicking “No” 😈";
+    mood.textContent  = "🐻";
+  });
+
+  const lines = [
+    `${HER}… sure? 😶`,
+    "Are you REALLY pressing No? 🥺",
+    `${HER} pleaseee 😭`,
+    `Okay listen… ${ME} will be sad 😔`,
+    "Last chance 😤",
+    "No button is not for you 😈",
+    `${HER}, you love me na? 😚`,
+    "Okay okay… JUST CLICK YES 😌"
+  ];
+
   function moveNoInsideCard(){
     if (noBtn.style.display === "none") return;
 
     dodgeCount++;
 
-    // After N tries → disappear NO
     if (dodgeCount >= NO_DISAPPEAR_AFTER){
       noBtn.style.display = "none";
       title.textContent = `Okay ${HER}… NO is removed 😌`;
@@ -320,7 +321,6 @@
     title.textContent = lines[Math.min(dodgeCount - 1, lines.length - 1)];
     sub.textContent = `Don’t do this to ${ME} 😭`;
     hint.textContent = "Try again 😈";
-
     mood.textContent = dodgeCount < 3 ? "🥺" : (dodgeCount < 4 ? "😤" : "😈");
 
     // YES grows
@@ -329,7 +329,7 @@
     yesBtn.style.fontSize = `${18 + (yesScale - 1) * 8}px`;
     yesBtn.textContent = dodgeCount >= 4 ? "YESSS 💖" : "Yes 💖";
 
-    // Move NO inside the card
+    // Position NO inside card (mobile-safe)
     card.style.position = "relative";
     noBtn.style.position = "absolute";
     noBtn.style.zIndex = "5";
@@ -338,14 +338,19 @@
     const btnRect  = noBtn.getBoundingClientRect();
 
     const pad = 18;
+
     const maxX = Math.max(pad, cardRect.width  - btnRect.width  - pad);
     const maxY = Math.max(pad, cardRect.height - btnRect.height - pad);
 
-    const minY = 170;
-    const safeMaxY = Math.max(minY, maxY);
+    // Clamp minY for small screens
+    const desiredMinY = 170;
+    const minY = Math.min(desiredMinY, maxY);
+    const yRange = Math.max(0, maxY - minY);
 
-    const x = Math.random() * (maxX - pad) + pad;
-    const y = Math.random() * (safeMaxY - minY) + minY;
+    const xRange = Math.max(0, maxX - pad);
+
+    const x = pad + Math.random() * xRange;
+    const y = minY + Math.random() * yRange;
 
     noBtn.style.left = `${x}px`;
     noBtn.style.top  = `${y}px`;
@@ -353,7 +358,7 @@
     popHeartBurst(3);
   }
 
-  // ✅ MOBILE + DESKTOP handling (prevents double counting)
+  // ✅ Mobile + Desktop (no double count)
   let touchTriggered = false;
 
   function tryNo(e){
@@ -361,20 +366,20 @@
     moveNoInsideCard();
   }
 
-  // Mobile: touchstart fires first
   noBtn.addEventListener("touchstart", (e) => {
     touchTriggered = true;
     tryNo(e);
   }, { passive: false });
 
-  // Desktop click + Mobile click fallback
   noBtn.addEventListener("click", (e) => {
-    if (touchTriggered) { touchTriggered = false; return; } // prevent double
+    if (touchTriggered) { touchTriggered = false; return; }
     tryNo(e);
   });
 
-  // Desktop hover (optional): keeps your laptop “funny” behavior
-  noBtn.addEventListener("mouseenter", moveNoInsideCard);
+  // ✅ Desktop hover only when real hover exists
+  if (window.matchMedia("(hover: hover)").matches) {
+    noBtn.addEventListener("mouseenter", moveNoInsideCard);
+  }
 
   // YES -> scene2
   yesBtn.addEventListener("click", () => {
@@ -429,6 +434,7 @@ I love youuuuu!
     popHeartBurst(10);
   });
 
+  // Hearts
   function heartOne(){
     const h = document.createElement("div");
     h.className = "heart";
@@ -442,6 +448,7 @@ I love youuuuu!
   function heartsRain(n=16){ for(let i=0;i<n;i++) setTimeout(heartOne, i*120); }
   function popHeartBurst(n=10){ for(let i=0;i<n;i++) setTimeout(heartOne, i*60); }
 
+  // Confetti
   const canvas = document.getElementById("fx");
   const ctx = canvas.getContext("2d");
   let pieces = [];
